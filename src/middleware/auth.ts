@@ -24,18 +24,18 @@ export async function authenticate (req: Request, res: Response, next: NextFunct
     // const [, token] = bearer.split(' ')
     try {
         const decoded = jwt.verify(token, process.env.JWT_SECRET)
-
         if(typeof decoded === 'object' && decoded.id){
-            const user = await User.findById(decoded.id).select('_id email name')
+            const user = await User.findById(decoded.id).select('id name email')
             if(user){
                 req.user = user
+                return next()
             }else{
-                res.status(500).json({error: 'Token no válido'})
+                return res.status(500).json({error: 'Token no válido'})
             }
         }
     } catch (error) {
-        res.status(500).json({error: 'Token no válido'})
+        return res.status(500).json({error: 'Token no válido'})
     }
 
-    next()
+    return next()
 }

@@ -21,7 +21,7 @@ export async function taskExists(req: Request, res: Response, next: NextFunction
         req.task = task
         next()
     } catch (error) {
-        res.status(500).json({ error: 'Hubo un error' })
+        return res.status(500).json({ error: 'Hubo un error' })
     }
 
 }
@@ -30,7 +30,17 @@ export function taskBelongsToProject(req: Request, res: Response, next: NextFunc
 
     if(req.task.project.toString() !== req.project.id.toString()){
         const error = new Error('Acción no válida')
-        res.status(400).json({ error: error.message })
+        return res.status(400).json({ error: error.message })
+    }
+    next()
+    
+}
+
+export function hasAuthorization(req: Request, res: Response, next: NextFunction){
+
+    if(req.user.id.toString() !== req.project.manager.toString()){
+        const error = new Error('Acción no válida')
+        return res.status(400).json({ error: error.message })
     }
     next()
     

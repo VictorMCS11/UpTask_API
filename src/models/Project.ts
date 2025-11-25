@@ -1,12 +1,15 @@
-import mongoose, { Schema, Document, PopulatedDoc } from "mongoose";
+import mongoose, { Schema, Document, PopulatedDoc, Types } from "mongoose";
 import { TaskType } from "./Task";
+import { IUser } from "./User";
 
 // Typescript
 export type ProjectType = Document & {
-    projectName: string,
-    clientName: string,
+    projectName: string
+    clientName: string
     description: string
     tasks: PopulatedDoc<TaskType & Document>[]
+    manager: PopulatedDoc<IUser & Document>
+    team: PopulatedDoc<IUser & Document>[]
 }
 
 // Mongoose
@@ -31,7 +34,17 @@ const ProjectSchema: Schema = new Schema({
             type: mongoose.Types.ObjectId,
             ref: 'Task'
         }
-    ]
+    ],
+    manager: {
+        type: Types.ObjectId,
+        ref: 'User'
+    },
+    team: [
+        {
+            type: mongoose.Types.ObjectId,
+            ref: 'User'
+        }
+    ],
 }, {timestamps: true})
 
 const Project = mongoose.model<ProjectType>('Project', ProjectSchema)

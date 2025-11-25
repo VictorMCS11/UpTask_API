@@ -1,12 +1,12 @@
-import mongoose from "mongoose";
-import { Document, Schema, Types } from "mongoose";
+import mongoose, { Document, Schema, Types, PopulatedDoc } from "mongoose";
+import { IUser } from "./User";
 
 const taskStatus = {
     PENDING: 'pending',
     ON_HOLD: 'onHold',
     IN_PROGRESS: 'inProgress',
     UNDER_REVIEW: 'underReview',
-    COMPLETED: 'completed'
+    COMPLETED: 'completed',
 } as const
 
 export type TaskStatus = typeof taskStatus[keyof typeof taskStatus]
@@ -16,6 +16,11 @@ export type TaskType = Document & {
     description: string
     project: Types.ObjectId
     status: TaskStatus
+    completedBy: {
+        user: Types.ObjectId,
+        status: TaskStatus
+    }[],
+    notes: Types.ObjectId[]
 }
 
 export const TaskSchema: Schema = new Schema({
@@ -37,7 +42,27 @@ export const TaskSchema: Schema = new Schema({
         type: String,
         enum: Object.values(taskStatus),
         default: taskStatus.PENDING
-    }
+    },
+    completedBy: [
+        {   
+            user: {
+                type: Types.ObjectId,
+                ref: 'User',
+                default: null
+            },
+            status: {
+                type: String,
+                enum: Object.values(taskStatus),
+                default: taskStatus.PENDING
+            }
+        }
+    ],
+    notes: [
+        {
+            type: Types.ObjectId,
+            ref: 'Note'
+        }
+    ]
 }, {timestamps: true})
 
 const Task = mongoose.model<TaskType>('Task', TaskSchema)

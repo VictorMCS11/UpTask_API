@@ -1,6 +1,5 @@
 import type { Request, Response } from "express";
 import Task from "../models/Task";
-import Project from "../models/Project";
 
 export class TaskController {
 
@@ -28,18 +27,10 @@ export class TaskController {
 
     static getTaskById = async (req: Request, res: Response) =>{
         try {
-            const { taskId } = req.params
-            const { projectId } = req.params
-            const task = await Task.findById(taskId)
-            if(!task){
-                const error = new Error('Tarea no encontrada')
-                res.status(404).json({ error: error.message })
-            }
-            if(task.project.toString() !== projectId){
-                const error = new Error('Acción no válida')
-                res.status(400).json({ error: error.message })
-            }
-            res.json(req.task)
+            const task = await Task.findById(req.task.id)
+                            .populate({path: 'completedBy.user', select: 'id name email'})
+                            .populate({path: 'notes', populate: {path: 'createdBy', select: 'id name email'}})
+            res.json(task)
         } catch (error) {
             res.status(500).json({ error: 'Hubo un error' })
         }
@@ -76,6 +67,14 @@ export class TaskController {
         try {
             const { status } = req.body
             req.task.status = status
+
+            const data = {
+                user: req.user.id,
+                status
+            }
+
+            req.task.completedBy.push(data)
+
             await req.task.save()
             res.send('Tarea Actualizada')
         } catch (error) {

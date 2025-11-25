@@ -6,19 +6,26 @@ export class ProjectController {
     static createProject = async (req: Request, res: Response) =>{
         try {
             const project = new Project(req.body)
-            console.log(req.user)
+
+            // Asignar el manager o administrador del proyecto
+            project.manager = req.user.id
+
             await project.save()
-            res.send('Proyecto creado correctamente')
+            return res.send('Proyecto creado correctamente')
         } catch (error) {
             console.log(error)
         }
-
     }
 
     static getAllProjects = async (req: Request, res: Response) =>{
         try {
-            const projects = await Project.find({})
-            res.json(projects)
+            const projects = await Project.find({
+                $or: [
+                    { manager: { $in: req.user._id } }, // Array con el ID
+                    { team: { $in: req.user._id } }
+                ]
+            })
+            return res.json(projects)
         } catch (error) {
             console.log(error)
         }
@@ -27,12 +34,36 @@ export class ProjectController {
     static getProjectById = async (req: Request, res: Response) =>{
         const { id } = req.params
         try {
-            const project = await Project.findById(id).populate('tasks')
+            const project = await Project.findById(id)
+                .populate({
+                    path: 'tasks',
+                    populate: [
+                        // Populate para completedBy.user
+                        {
+                            path: 'completedBy.user', 
+                            model: 'User'
+                        },
+                        // Populate para notes y dentro de notes el createdBy
+                        {
+                            path: 'notes',
+                            model: 'Note',
+                            populate: {
+                                path: 'createdBy',
+                                model: 'User'
+                            }
+                        }
+                    ]
+                });
+
             if(!project){
                 const error = new Error('Proyecto no encontrado')
                 return res.status(404).json({ error: error.message })
             }
-            res.json(project)
+            if(project.manager.toString() !== req.user.id && !project.team.includes(req.user.id)){
+                const error = new Error('Acción no válida')
+                return res.status(404).json({error: error.message})
+            }
+            return res.json(project)
         } catch (error) {
             console.log(error)
         }
@@ -46,12 +77,16 @@ export class ProjectController {
                 const error = new Error('Proyecto no encontrado')
                 return res.status(404).json({ error: error.message })
             }
+            if(project.manager.toString() !== req.user.id){
+                const error = new Error('Solo el Manager puede actualizar el proyecto')
+                return res.status(404).json({error: error.message})
+            }
             project.clientName = req.body.clientName
             project.projectName = req.body.projectName
             project.description = req.body.description
             
             await project.save()
-            res.send('Proyecto Actualizado')
+            return res.send('Proyecto Actualizado')
         } catch (error) {
             console.log(error)
         }
@@ -65,8 +100,12 @@ export class ProjectController {
                 const error = new Error('Proyecto no encontrado')
                 return res.status(404).json({ error: error.message })
             }
+            if(project.manager.toString() !== req.user.id){
+                const error = new Error('Solo el Manager puede eliminar el proyecto')
+                return res.status(404).json({error: error.message})
+            }
             await project.deleteOne()
-            res.send('Proyecto Eliminado')
+            return res.send('Proyecto Eliminado')
         } catch (error) {
             console.log(error)
         }
