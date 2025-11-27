@@ -4,7 +4,9 @@
   "main": "index.js",
   "scripts": {
     "dev": "nodemon --exec ts-node src/index.ts",
-    "dev:api": "nodemon --exec ts-node src/index.ts --api"
+    "dev:api": "nodemon --exec ts-node src/index.ts --api",
+    "build": "tsc",
+    "start": "node ./dist/index.js"
   },
   "keywords": [],
   "author": "",
@@ -12,6 +14,7 @@
   "description": "",
   "dependencies": {
     "bcrypt": "^6.0.0",
+    "build": "^0.1.4",
     "colors": "^1.4.0",
     "cors": "^2.8.5",
     "dotenv": "^17.2.1",

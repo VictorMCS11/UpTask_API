@@ -1,4 +1,4 @@
-import type { Request, Response, NextFunction } from "express";
+ import type { Request, Response, NextFunction } from "express";
 import Project, { ProjectType } from "../models/Project";
 
 declare global {
